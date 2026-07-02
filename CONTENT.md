@@ -41,7 +41,8 @@ linear algebra at the level of "I can read $\prod$, $\sum$, and a matrix product
   Suggested order: L1 → L2 → L3 → L4 → L5
 ```
 
-**All five lessons are complete and verified end-to-end.** 🎓
+**Part I (Lessons 1–5) is complete and verified end-to-end — and Lesson 6, the first
+of the advanced Part II track, is built too.** 🎓
 
 ---
 
@@ -151,16 +152,20 @@ Part I (Lessons 1–5) covers the *foundations*. This planned second track digs 
 the two things that make diffusion LMs practically exciting — **how you reveal
 tokens** and **how you generate in parallel** — plus the **2025–2026 frontier**.
 
-### Lesson 6 — Masking & unmasking *strategies* (the decoding zoo) 🔜
-Lesson 1 revealed tokens at random; Lesson 4 revealed the most-confident first.
-That's just the start. This lesson builds and compares the full menu:
-- **Confidence / entropy / margin**-based unmasking orders, and cosine vs. linear
-  reveal schedules.
-- **Remasking & self-correction** — let the model *un-commit* a token it now
-  regrets (directly fixes the "irreversible commitment" weakness we saw in Lessons
-  2 and 4), via predictor–corrector / resample steps.
-- **Any-order** generation and planned/adaptive decoding.
-- Papers: MaskGIT, LLaDA, and remasking/self-correction samplers.
+### Lesson 6 — Masking & unmasking *strategies* (the decoding zoo) ✅
+
+**Notebook:** [`06_unmasking_strategies.ipynb`](06_unmasking_strategies.ipynb)
+
+One fixed model, many samplers — decoding quality is a first-class design choice.
+- **Confidence / entropy / margin** unmasking orders (Gumbel-noised, MaskGIT-style)
+  vs. random — confident-first pulls ahead as steps grow (T=16 ≈ 46% vs 27% valid).
+- **Remasking & self-correction** — let the model *un-commit* a letter it no longer
+  supports and reconsider it (a predictor–corrector loop). Directly fixes the
+  "irreversible commitment" weakness from Lessons 2 & 4, and **helps at every step
+  count** here (T=16 50%→66%, T=32 80%→86%), with a trace showing it happen.
+- **Papers:** MaskGIT (Chang et al. 2022), LLaDA (Nie et al. 2025).
+- **Takeaway:** the same weights generate far better text if you decode them well —
+  and self-correction is the biggest lever.
 
 ### Lesson 7 — Parallelization & fast generation 🔜
 Diffusion's headline advantage over autoregressive LLMs: **generate many tokens at
@@ -187,8 +192,9 @@ The research edge, tied back to what you built:
 > written — no invented papers. If you want the very latest, that literature review
 > is the first step.
 
-*(Part II is a roadmap, not yet built. Each lesson will follow Part I's recipe:
-tiny, runnable, verified, beginner-friendly, one paper-family at a time.)*
+*(**Lesson 6 is built and verified**; Lessons 7–8 are the remaining roadmap. Each
+follows Part I's recipe: tiny, runnable, verified, beginner-friendly, one
+paper-family at a time.)*
 
 ---
 

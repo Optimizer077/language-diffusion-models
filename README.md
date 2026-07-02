@@ -9,7 +9,7 @@
   <img alt="Python" src="https://img.shields.io/badge/Python-3.10%2B-blue">
   <img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-CPU%20or%20CUDA-ee4c2c">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-green">
-  <img alt="Status" src="https://img.shields.io/badge/Lessons%201--5-complete-success">
+  <img alt="Status" src="https://img.shields.io/badge/Lessons%201--6-complete-success">
 </p>
 
 <p align="center">
@@ -60,6 +60,7 @@ or two**. The notebooks auto-detect a GPU (`device = "cuda" if torch.cuda.is_ava
 | **3** | [Diffusion-LM: Continuous Diffusion](03_diffusion_lm_embedding_space.ipynb) | Gaussian diffusion in **embedding space** + rounding; DDPM sampling; **gradient-guided controllable generation** | Diffusion-LM, DDPM |
 | **4** | [Making Masked Diffusion Practical](04_scaling_diffusion_llm.ipynb) | LLaDA-style: **generalization** (grammar corpus), **classifier-free guidance**, **confidence-based sampling** + the steps↔quality trade-off | LLaDA, MaskGIT |
 | **5** | [SEDD: Score-Entropy Diffusion](05_sedd_score_entropy.ipynb) | Learn the distribution's **ratios** (concrete score) via score-entropy; the learned score is **verified** to match the true ratio's *shape* (corr ≈ 0.99) | SEDD |
+| **6** | [Unmasking Strategies](06_unmasking_strategies.ipynb) | *(Part II)* The decoding zoo: confidence/entropy/margin orders vs. random, and **remasking / self-correction** — one fixed model, big quality swings | MaskGIT, LLaDA |
 
 📚 **See [`CONTENT.md`](CONTENT.md)** for the full syllabus, learning path, and concept map.
 🧮 **See [`reference/D3PM_MATH.md`](reference/D3PM_MATH.md)** for the worked, numerically-validated D3PM derivations.
@@ -86,12 +87,13 @@ or two**. The notebooks auto-detect a GPU (`device = "cuda" if torch.cuda.is_ava
 ├── 03_diffusion_lm_embedding_space.ipynb  ← Lesson 3
 ├── 04_scaling_diffusion_llm.ipynb         ← Lesson 4
 ├── 05_sedd_score_entropy.ipynb            ← Lesson 5
+├── 06_unmasking_strategies.ipynb          ← Lesson 6 (Part II)
 ├── interactive/                           ← self-contained interactive playground (index.html)
 ├── papers/                                ← the cited papers (PDFs) + a per-lesson index
 ├── reference/
 │   └── D3PM_MATH.md                       ← worked, validated D3PM math
 ├── tools/
-│   ├── build_lesson1.py … build_lesson5.py  ← regenerate each lesson's notebook
+│   ├── build_lesson1.py … build_lesson6.py  ← regenerate each lesson's notebook
 │   ├── d3pm_reference_check.py            ← numerical oracle for the D3PM math (Lesson 2)
 │   └── sedd_reference_check.py            ← numerical oracle for the SEDD math (Lesson 5)
 ├── requirements.txt
