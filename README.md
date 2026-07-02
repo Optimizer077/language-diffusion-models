@@ -26,10 +26,10 @@ You'll build the masking models behind **MDLM** and **LLaDA**, the general **D3P
 ## 🎮 Try it first — interactive playground
 
 <p align="center">
-  <a href="interactive/index.html"><img src="interactive/preview.png" alt="Interactive language-diffusion playground" width="760"></a>
+  <a href="interactive/index.html"><img src="interactive/demo.gif" alt="A sentence dissolving into noise and re-forming — the interactive diffusion playground" width="820"></a>
 </p>
 
-Before the math, get the *feel*: **[▶ open the interactive playground](interactive/index.html)**. Watch a sentence dissolve into noise and re-form, drag the noise level, toggle the noise **kernel** (mask vs. random), compare **confidence-first vs. random** unmasking, and poke an interactive **transition matrix** — an intuition-first visual tour of Lessons 1, 2 & 4.
+Before the math, get the *feel*: **[▶ open the interactive playground](interactive/index.html)**. Watch a sentence dissolve into noise and re-form, scrub the noise level, toggle the noise **kernel** (mask vs. random), step through the **reverse-trajectory filmstrip**, compare **confidence-first vs. random** unmasking, and poke a live **transition matrix** — an intuition-first visual tour of Lessons 1, 2 & 4. (The animation above is the real page.)
 
 > It's one self-contained HTML file, no install. **Clone the repo and open `interactive/index.html` in any browser**, or enable **GitHub Pages** (Settings → Pages → deploy from `main`) to get a live shareable link.
 

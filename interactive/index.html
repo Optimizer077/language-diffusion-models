@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Language Diffusion · Interactive Playground</title>
 <meta name="description" content="Watch text dissolve into noise and re-form — an interactive, intuition-first companion to the Language Diffusion Models course." />
+<meta name="theme-color" content="#0b0c10" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Language Diffusion — Interactive Playground" />
+<meta property="og:description" content="Watch text dissolve into noise and re-form. An intuition-first, interactive tour of language diffusion models." />
+<meta property="og:image" content="preview.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b0c10'/%3E%3Cpath d='M16 5l8 11-8 11-8-11z' fill='%23e9b44c'/%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet" />
@@ -172,6 +179,34 @@
     font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--faint)}
   footer a{color:var(--dim); text-decoration:none} footer a:hover{color:var(--amber)}
 
+  /* ---------- trajectory filmstrip ---------- */
+  .filmwrap{margin-top:18px; opacity:0; animation:rise .8s .4s cubic-bezier(.2,.7,.2,1) forwards}
+  .filmlabel{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.2em;
+    text-transform:uppercase; color:var(--dim); display:block; margin:0 2px 10px}
+  .film{display:grid; grid-template-columns:repeat(6,1fr); gap:8px}
+  .frame{background:var(--bg2); border:1px solid var(--line); border-radius:9px; padding:10px 9px; cursor:pointer;
+    font-family:"IBM Plex Mono",monospace; font-size:11px; line-height:1.4; color:var(--dim); transition:.2s;
+    overflow:hidden; white-space:nowrap; text-overflow:ellipsis}
+  .frame:hover{border-color:var(--dim); transform:translateY(-2px)}
+  .frame.active{border-color:var(--amber); background:#191b21}
+  .frame .ft{display:block; color:var(--faint); font-size:9px; margin-bottom:6px; letter-spacing:.06em}
+  @media(max-width:560px){.film{grid-template-columns:repeat(3,1fr)}}
+
+  /* ---------- presets + share + toast ---------- */
+  .extras{display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; margin-top:16px}
+  .presets{display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-family:"IBM Plex Mono",monospace; font-size:12px}
+  .presets .plabel{color:var(--faint); letter-spacing:.14em; text-transform:uppercase}
+  .presets button{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--dim); background:var(--bg2);
+    border:1px solid var(--line); border-radius:20px; padding:6px 13px; cursor:pointer; transition:.2s}
+  .presets button:hover{color:var(--ink); border-color:var(--amber)}
+  .sharebtn{font-size:12px!important; padding:8px 15px!important}
+  .toast{position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(20px); opacity:0;
+    background:var(--amber); color:#171200; font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:600;
+    padding:11px 20px; border-radius:11px; pointer-events:none; transition:.32s cubic-bezier(.2,.8,.2,1); z-index:30; box-shadow:var(--shadow)}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  .kbd{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--faint); border:1px solid var(--line);
+    border-radius:5px; padding:1px 6px; background:#0c0e12}
+
   @keyframes rise{from{opacity:0; transform:translateY(18px)} to{opacity:1; transform:none}}
   @keyframes pop{0%{transform:translateY(6px) scale(.7); opacity:0} 60%{transform:translateY(-2px) scale(1.06)} 100%{transform:none}}
   .reveal-on-scroll{opacity:0; transform:translateY(22px); transition:opacity .7s, transform .7s}
@@ -233,6 +268,11 @@
     </div>
   </section>
 
+  <div class="filmwrap">
+    <span class="filmlabel">◂ the reverse trajectory · noise → clean · click a frame to jump</span>
+    <div class="film" id="film"></div>
+  </div>
+
   <div class="legend">
     <span><i class="dot" style="background:var(--amber)"></i> revealed (true letter)</span>
     <span><i class="dot" style="background:var(--mask)"></i> [MASK] — absorbing</span>
@@ -240,7 +280,19 @@
   </div>
   <p class="note"><b>Try it:</b> drag the noise slider, then press <b>Play</b> to watch the sentence
     denoise. Switch the <b>kernel</b> to see the two kinds of noise, and flip <b>reveal order</b> to
-    feel why confident-first beats random. <em>This animates the ideas — it is not the trained model.</em></p>
+    feel why confident-first beats random. <em>This animates the ideas — it is not the trained model.</em>
+    &nbsp;<span class="kbd">space</span> plays/pauses.</p>
+
+  <div class="extras">
+    <div class="presets" id="presets">
+      <span class="plabel">try:</span>
+      <button data-x="the cat sat on the mat">the cat sat on the mat</button>
+      <button data-x="diffusion models generate text">diffusion models generate text</button>
+      <button data-x="noise becomes language">noise becomes language</button>
+    </div>
+    <button class="btn ghost sharebtn" id="share">⧉ &nbsp;copy link to this view</button>
+  </div>
+  <div class="toast" id="toast">link copied ✓</div>
 
   <!-- ============ PROCESS ============ -->
   <section class="block reveal-on-scroll">
@@ -402,7 +454,7 @@
     computeOrder();
     textEl.innerHTML = "";
     S.per.forEach(() => textEl.appendChild(Object.assign(document.createElement("span"),{className:"ch"})));
-    S.revealedPrev = new Set(); render();
+    S.revealedPrev = new Set(); buildFilm(); render();
   }
   function computeOrder(){
     const n=S.per.length, idx=[...Array(n).keys()];
@@ -411,20 +463,49 @@
     else { const score=i=>{ const c=S.per[i].ch; if(c===" ")return 100; const r=COMMON.indexOf(c); return r>=0?60-r:20; };
       S.order=idx.sort((a,b)=>score(b)-score(a)||a-b); }
   }
-  function render(pop=false){
+  function render(pop=false, flick=false){
     const n=S.per.length, revealCount=Math.round((1-S.t)*n);
     const revealed=new Set(S.order.slice(0,revealCount)), cells=textEl.children;
     for(let i=0;i<n;i++){
       const cell=cells[i], p=S.per[i]; let cls="ch"+(p.isSpace?" space":""), glyph;
       if(revealed.has(i)){ cls+=" reveal"+(pop&&!S.revealedPrev.has(i)?" pop":""); glyph=p.isSpace?" ":p.ch; }
       else if(S.kernel==="absorbing"){ cls+=" mask"; glyph=p.isSpace?" ":"▦"; }
-      else { cls+=" rand"; glyph=p.isSpace?" ":p.rand; }
+      else { cls+=" rand"; glyph=p.isSpace?" ":(flick?RAND[Math.floor(Math.random()*26)]:p.rand); }
       cell.className=cls; cell.textContent=glyph;
     }
     S.revealedPrev=revealed;
     el("tval").textContent=S.t.toFixed(2); el("step").textContent=revealCount; el("steps").textContent=n;
     el("mode").textContent = S.playing?"reverse · denoising…":(S.t>=1?"pure noise":S.t<=0?"clean":"partly noised");
     const sl=el("slider"); sl.value=S.t; sl.style.setProperty("--fill",(S.t*100)+"%");
+    updateFilmActive();
+  }
+
+  // ---- reverse-trajectory filmstrip ----
+  const FILM_TS=[1,0.8,0.6,0.4,0.2,0];
+  const esc=c=>c==="<"?"&lt;":c===">"?"&gt;":c==="&"?"&amp;":c;
+  function stateHTML(t){
+    const n=S.per.length, rc=Math.round((1-t)*n), rev=new Set(S.order.slice(0,rc));
+    return S.per.map((p,i)=>{
+      if(rev.has(i)) return p.isSpace?"&nbsp;":`<span style="color:var(--amber)">${esc(p.ch)}</span>`;
+      if(p.isSpace) return "&nbsp;";
+      return S.kernel==="absorbing" ? `<span style="color:var(--mask)">▦</span>`
+                                    : `<span style="color:var(--noise)">${p.rand}</span>`;
+    }).join("");
+  }
+  function buildFilm(){
+    const f=el("film"); f.innerHTML="";
+    FILM_TS.forEach(t=>{
+      const d=document.createElement("div"); d.className="frame";
+      d.innerHTML=`<span class="ft">t = ${t.toFixed(1)}</span>${stateHTML(t)}`;
+      d.addEventListener("click",()=>{ stop(); S.t=t; render(); });
+      f.appendChild(d);
+    });
+    updateFilmActive();
+  }
+  function updateFilmActive(){
+    const frames=el("film").children; if(!frames.length) return;
+    let best=0, bd=9; FILM_TS.forEach((t,i)=>{ const dd=Math.abs(t-S.t); if(dd<bd){bd=dd; best=i;} });
+    for(let i=0;i<frames.length;i++) frames[i].classList.toggle("active", i===best);
   }
   function play(){
     if(S.playing) return stop();
@@ -432,7 +513,7 @@
     S.playing=true; el("play").innerHTML="❚❚ &nbsp;Pause"; let last=0;
     const stepFn=ts=>{ if(!S.playing)return;
       if(ts-last >= 420-S.speed*36){ last=ts; const n=S.per.length, r=Math.round((1-S.t)*n);
-        if(r>=n){ stop(); return; } S.t=Math.max(0,1-(r+1)/n); render(true); }
+        if(r>=n){ stop(); return; } S.t=Math.max(0,1-(r+1)/n); render(true, S.kernel==="uniform"); }
       S.raf=requestAnimationFrame(stepFn); };
     S.raf=requestAnimationFrame(stepFn);
   }
@@ -445,9 +526,23 @@
   el("reset").addEventListener("click",reset);
   el("input").addEventListener("input",e=>{ S.text=e.target.value||" "; stop(); S.t=1; build(); syncCompare(); });
   document.querySelectorAll("#kernel button").forEach(b=>b.addEventListener("click",()=>{
-    document.querySelectorAll("#kernel button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); S.kernel=b.dataset.k; render(); }));
+    document.querySelectorAll("#kernel button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); S.kernel=b.dataset.k; buildFilm(); render(); }));
   document.querySelectorAll("#strategy button").forEach(b=>b.addEventListener("click",()=>{
-    document.querySelectorAll("#strategy button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); S.strategy=b.dataset.s; computeOrder(); render(); }));
+    document.querySelectorAll("#strategy button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); S.strategy=b.dataset.s; computeOrder(); buildFilm(); render(); }));
+
+  // presets, share, keyboard
+  document.querySelectorAll("#presets button").forEach(b=>b.addEventListener("click",()=>{
+    el("input").value=b.dataset.x; S.text=b.dataset.x; stop(); S.t=1; build(); syncCompare(); }));
+  function toast(){ const t=el("toast"); t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1600); }
+  el("share").addEventListener("click",()=>{
+    const url=location.origin+location.pathname+`#k=${S.kernel}&t=${S.t.toFixed(2)}`;
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(toast,toast); }
+    else { const ta=document.createElement("textarea"); ta.value=url; document.body.appendChild(ta); ta.select();
+      try{document.execCommand("copy");}catch(e){} ta.remove(); toast(); }
+  });
+  document.addEventListener("keydown",e=>{
+    if(e.code==="Space" && !/INPUT|TEXTAREA/.test(e.target.tagName)){ e.preventDefault(); play(); } });
+
   build();
   // deep-link state via hash (e.g. #k=uniform&t=0.35) — also used for the README preview
   const hp=new URLSearchParams(location.hash.slice(1));
@@ -515,8 +610,12 @@
   syncCompare();
 
   /* ---------------- scroll reveals ---------------- */
-  const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); }}),{threshold:.12});
-  document.querySelectorAll(".reveal-on-scroll").forEach(s=>io.observe(s));
+  const revs=document.querySelectorAll(".reveal-on-scroll");
+  if("IntersectionObserver" in window){
+    const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); }}),{threshold:.12});
+    revs.forEach(s=>io.observe(s));
+    setTimeout(()=>revs.forEach(s=>s.classList.add("in")), 4000);   // safety: never leave content hidden
+  } else revs.forEach(s=>s.classList.add("in"));
 })();
 </script>
 </body>
