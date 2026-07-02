@@ -24,3 +24,6 @@ _scratch/
 # interactive build/preview scratch
 interactive/_*.png
 interactive/_frames/
+
+# paper PDFs kept local-only (links in papers/README.md)
+papers/*.pdf
