@@ -22,5 +22,5 @@ _scratch/
 *.log
 
 # interactive build/preview scratch
-interactive/_preview*.png
+interactive/_*.png
 interactive/_frames/

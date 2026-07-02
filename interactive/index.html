@@ -207,6 +207,20 @@
   .kbd{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--faint); border:1px solid var(--line);
     border-radius:5px; padding:1px 6px; background:#0c0e12}
 
+  /* ---------- live in-browser trainer ---------- */
+  .trainpanel{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:22px; box-shadow:var(--shadow)}
+  .trainctl{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:16px}
+  .trainstat{margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--dim)}
+  .trainstat b{color:var(--amber)}
+  #lossPlot{width:100%; height:auto; display:block; background:#0c0e12; border:1px solid var(--line); border-radius:12px}
+  .plotcap{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--faint); letter-spacing:.1em; margin:10px 2px 0}
+  .samples{margin-top:18px; display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  @media(max-width:600px){.samples{grid-template-columns:1fr}}
+  .samples .s{font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--amber); background:var(--bg2);
+    border:1px solid var(--line); border-radius:8px; padding:9px 13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .samples .s.miss{color:var(--dim)}
+  .samples .shint{grid-column:1/-1; color:var(--faint); font-family:"IBM Plex Mono",monospace; font-size:13px; padding:6px 2px}
+
   @keyframes rise{from{opacity:0; transform:translateY(18px)} to{opacity:1; transform:none}}
   @keyframes pop{0%{transform:translateY(6px) scale(.7); opacity:0} 60%{transform:translateY(-2px) scale(1.06)} 100%{transform:none}}
   .reveal-on-scroll{opacity:0; transform:translateY(22px); transition:opacity .7s, transform .7s}
@@ -403,9 +417,33 @@
       <b>fast</b> — good text in a handful of steps instead of hundreds.</div>
   </section>
 
+  <!-- ============ LIVE TRAINER ============ -->
+  <section class="block reveal-on-scroll">
+    <p class="eyebrow"><span class="num">04 —</span> the real thing</p>
+    <h2>Train a diffusion LM <em>live</em>, in your browser</h2>
+    <p class="lede">Everything above was an animation. <b>This is not.</b> Press train and a real (tiny)
+      masked-diffusion model — a small neural net with <b>hand-written backprop, no libraries</b> — learns
+      to denoise 16 toy sentences right here on your machine. Watch the loss fall, then <b>generate</b>
+      from the model you just trained.</p>
+    <div class="trainpanel">
+      <div class="trainctl">
+        <button class="btn play" id="trainBtn">▶ &nbsp;Train</button>
+        <button class="btn ghost" id="genBtn">✦ &nbsp;Generate</button>
+        <span class="trainstat">step <b id="tstep">0</b> / <span id="tmax">500</span> · loss <b id="tloss">—</b></span>
+      </div>
+      <canvas id="lossPlot" width="920" height="240" aria-label="training loss curve"></canvas>
+      <p class="plotcap">MASKED CROSS-ENTROPY LOSS · lower = better at filling in the blanks</p>
+      <div class="samples" id="samples"><span class="shint">press Train (~10&nbsp;s), then Generate to sample from the model you trained</span></div>
+    </div>
+    <div class="callout">👆 This is exactly <b>Lesson 1</b> — mask, predict, cross-entropy — just small
+      enough for JavaScript (a 2-layer net instead of a transformer). If the samples come out a little
+      rough, that's the tiny model talking; the <a href="../01_foundations_masked_diffusion.ipynb">notebook
+      version</a> uses a real transformer and trains in seconds.</div>
+  </section>
+
   <!-- ============ TRAINING ============ -->
   <section class="block reveal-on-scroll">
-    <p class="eyebrow"><span class="num">04 —</span> how it learns</p>
+    <p class="eyebrow"><span class="num">05 —</span> how it learns</p>
     <h2>The training idea, in <em>plain words</em></h2>
     <p class="lede">Strip away the theory and training is almost embarrassingly simple:</p>
     <div class="steps">
@@ -616,6 +654,150 @@
     revs.forEach(s=>io.observe(s));
     setTimeout(()=>revs.forEach(s=>s.classList.add("in")), 4000);   // safety: never leave content hidden
   } else revs.forEach(s=>s.classList.add("in"));
+})();
+</script>
+
+<script>
+/* ============================================================================
+   A real, tiny masked-diffusion language model — trained in the browser.
+   2-layer MLP denoiser, hand-written backprop, Adam. Same objective as Lesson 1:
+   mask letters at a random noise level t, predict them, masked cross-entropy.
+   ========================================================================== */
+(() => {
+  const $ = id => document.getElementById(id);
+  const LINES = [
+    "the cat sat on the mat","the dog ran in the fog","the sun is in the sky",
+    "the fish swims in sea","the fox hid in the den","the owl flew away",
+    "a red car on the road","a blue boat on a lake","the man read a book",
+    "we ran to the bus","rain fell on the roof","the moon is in the sky",
+    "my cat naps in the sun","the kids ran home","the bird sang a song","the wind blew hard"
+  ];
+  // ---- vocab / data ----
+  const chars = [...new Set(LINES.join(""))].sort();
+  const V = chars.length, MASK = V;                 // input token id for [MASK]
+  const stoi = {}; chars.forEach((c,i)=>stoi[c]=i);
+  const L = Math.max(...LINES.map(s=>s.length));
+  const enc = s => { const a=new Int32Array(L); for(let i=0;i<L;i++) a[i]= i<s.length? stoi[s[i]] : stoi[" "]; return a; };
+  const DATA = LINES.map(enc);
+  const TRAINSET = new Set(LINES.map(s=>s.trim()));
+
+  // ---- model ----
+  const H=96, IN=L*(V+1)+1, OUT=L*V, timeBase=L*(V+1);
+  const rand=()=> (Math.random()*2-1);
+  const W1=new Float32Array(IN*H), W2=new Float32Array(H*OUT), b1=new Float32Array(H), b2=new Float32Array(OUT);
+  const s1=Math.sqrt(1/(L+1)), s2=Math.sqrt(1/H);            // fan-in-ish init
+  for(let i=0;i<W1.length;i++) W1[i]=rand()*s1;
+  for(let i=0;i<W2.length;i++) W2[i]=rand()*s2;
+  // grads + Adam state
+  const dW1=new Float32Array(IN*H), dW2=new Float32Array(H*OUT), db1=new Float32Array(H), db2=new Float32Array(OUT);
+  const mk=n=>new Float32Array(n);
+  const AW1=mk(IN*H),VW1=mk(IN*H),AW2=mk(H*OUT),VW2=mk(H*OUT),Ab1=mk(H),Vb1=mk(H),Ab2=mk(OUT),Vb2=mk(OUT);
+  const LR=0.01, B1=0.9, B2=0.999, EPS=1e-8; let adamT=0;
+
+  const hpre=new Float32Array(H), h=new Float32Array(H), logits=new Float32Array(OUT), dh=new Float32Array(H);
+
+  function forward(xt, t){
+    for(let j=0;j<H;j++){ let s=b1[j]+t*W1[timeBase*H+j]; for(let p=0;p<L;p++) s+=W1[(p*(V+1)+xt[p])*H+j]; hpre[j]=s; h[j]=s>0?s:0; }
+    for(let k=0;k<OUT;k++){ let s=b2[k]; for(let j=0;j<H;j++) s+=h[j]*W2[j*OUT+k]; logits[k]=s; }
+  }
+  // backprop for one example; accumulates into d*; returns loss
+  function backward(xt, x0, masked, t){
+    let loss=0, nm=0; const dlog=new Float32Array(OUT);
+    for(let p=0;p<L;p++){ if(!masked[p]) continue; nm++;
+      let mx=-1e9; for(let c=0;c<V;c++){ const z=logits[p*V+c]; if(z>mx) mx=z; }
+      let sum=0; for(let c=0;c<V;c++){ sum+=Math.exp(logits[p*V+c]-mx); }
+      const tgt=x0[p]; loss += -(logits[p*V+tgt]-mx-Math.log(sum));
+      for(let c=0;c<V;c++){ dlog[p*V+c]=Math.exp(logits[p*V+c]-mx)/sum - (c===tgt?1:0); }
+    }
+    if(nm===0) return 0;
+    const inv=1/nm; loss*=inv;
+    for(let j=0;j<H;j++){ let g=0; const row=j*OUT; for(let k=0;k<OUT;k++){ const d=dlog[k]*inv; if(d!==0){ dW2[row+k]+=h[j]*d; } g+=W2[row+k]*d; } dh[j]=g; }
+    for(let k=0;k<OUT;k++) db2[k]+=dlog[k]*inv;
+    for(let j=0;j<H;j++){ const dp = hpre[j]>0? dh[j]:0; if(dp===0) continue;
+      db1[j]+=dp; dW1[timeBase*H+j]+=t*dp; for(let p=0;p<L;p++) dW1[(p*(V+1)+xt[p])*H+j]+=dp; }
+    return loss;
+  }
+  function adam(P,dP,M,Vv,scale){ adamT; const bc1=1-Math.pow(B1,adamT), bc2=1-Math.pow(B2,adamT);
+    for(let i=0;i<P.length;i++){ const g=dP[i]*scale; M[i]=B1*M[i]+(1-B1)*g; Vv[i]=B2*Vv[i]+(1-B2)*g*g;
+      P[i]-=LR*(M[i]/bc1)/(Math.sqrt(Vv[i]/bc2)+EPS); dP[i]=0; } }
+
+  function step(BATCH){
+    dW1.fill(0); dW2.fill(0); db1.fill(0); db2.fill(0);
+    let tot=0;
+    for(let b=0;b<BATCH;b++){
+      const x0=DATA[(Math.random()*DATA.length)|0];
+      const t=0.05+Math.random()*0.9, xt=new Int32Array(L), masked=new Array(L);
+      let any=false;
+      for(let p=0;p<L;p++){ const m=Math.random()<t; masked[p]=m; xt[p]=m?MASK:x0[p]; if(m) any=true; }
+      if(!any){ const p=(Math.random()*L)|0; masked[p]=true; xt[p]=MASK; }
+      forward(xt,t); tot+=backward(xt,x0,masked,t);
+    }
+    adamT++;
+    const sc=1/BATCH;
+    adam(W1,dW1,AW1,VW1,sc); adam(W2,dW2,AW2,VW2,sc); adam(b1,db1,Ab1,Vb1,sc); adam(b2,db2,Ab2,Vb2,sc);
+    return tot/BATCH;
+  }
+
+  // ---- generation (ancestral masked sampling from the trained model) ----
+  function sample(T=24, temp=0.8){
+    const x=new Int32Array(L).fill(MASK);
+    for(let i=0;i<T;i++){ const t=1-i/T, s=1-(i+1)/T, rp=Math.min(1,(t-s)/t);
+      forward(x,t);
+      for(let p=0;p<L;p++){ if(x[p]!==MASK) continue; if(Math.random()>=rp) continue;
+        let mx=-1e9; for(let c=0;c<V;c++){ const z=logits[p*V+c]/temp; if(z>mx)mx=z; }
+        let sum=0; const pr=new Float32Array(V); for(let c=0;c<V;c++){ pr[c]=Math.exp(logits[p*V+c]/temp-mx); sum+=pr[c]; }
+        let r=Math.random()*sum, c=0; for(;c<V-1;c++){ r-=pr[c]; if(r<=0) break; } x[p]=c;
+      }
+    }
+    forward(x,1/T); for(let p=0;p<L;p++){ if(x[p]!==MASK) continue; let mx=-1e9,mc=0; for(let c=0;c<V;c++){ if(logits[p*V+c]>mx){mx=logits[p*V+c];mc=c;} } x[p]=mc; }
+    let out=""; for(let p=0;p<L;p++) out+=chars[x[p]]; return out.replace(/\s+$/,"");
+  }
+
+  // ---- live loss plot ----
+  const cv=$("lossPlot"), cx=cv.getContext("2d"), CW=cv.width, CH=cv.height;
+  const hist=[]; let ymax=1;
+  function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+  function plot(){
+    const amber=css("--amber")||"#e9b44c", line=css("--line")||"#22252c", dim=css("--dim")||"#7c818b";
+    cx.clearRect(0,0,CW,CH);
+    const pad=34, x0=pad, x1=CW-12, y0=12, y1=CH-24;
+    cx.strokeStyle=line; cx.lineWidth=1; cx.fillStyle=dim; cx.font="11px 'IBM Plex Mono',monospace";
+    for(let g=0;g<=4;g++){ const y=y0+(y1-y0)*g/4; cx.beginPath(); cx.moveTo(x0,y); cx.lineTo(x1,y); cx.stroke();
+      cx.fillText((ymax*(1-g/4)).toFixed(1), 4, y+3); }
+    if(hist.length<2) return;
+    const N=hist.length, sx=i=>x0+(x1-x0)*i/(MAXSTEP-1), sy=v=>y1-(y1-y0)*Math.min(1,v/ymax);
+    cx.strokeStyle=amber; cx.lineWidth=2; cx.beginPath();
+    for(let i=0;i<N;i++){ const X=sx(i), Y=sy(hist[i]); i?cx.lineTo(X,Y):cx.moveTo(X,Y); } cx.stroke();
+    cx.fillStyle=amber; cx.beginPath(); cx.arc(sx(N-1),sy(hist[N-1]),3,0,7); cx.fill();
+  }
+
+  // ---- training loop (chunked; keeps the UI + plot live) ----
+  const MAXSTEP=800, BATCH=12; let running=false, stepN=0, raf=null;
+  $("tmax").textContent=MAXSTEP;
+  function loop(){
+    if(!running) return;
+    for(let k=0;k<8 && stepN<MAXSTEP;k++){ const l=step(BATCH); hist.push(l); if(stepN<3) ymax=Math.max(ymax,l*1.05); stepN++; }
+    $("tstep").textContent=stepN; $("tloss").textContent=hist[hist.length-1].toFixed(3); plot();
+    if(stepN>=MAXSTEP){ running=false; $("trainBtn").innerHTML="▶ &nbsp;Train"; generate(); return; }
+    raf=requestAnimationFrame(loop);
+  }
+  $("trainBtn").addEventListener("click",()=>{
+    if(running){ running=false; $("trainBtn").innerHTML="▶ &nbsp;Resume"; if(raf)cancelAnimationFrame(raf); return; }
+    if(stepN>=MAXSTEP){ // reset for a fresh run
+      stepN=0; hist.length=0; ymax=1; adamT=0;
+      for(let i=0;i<W1.length;i++)W1[i]=rand()*s1; for(let i=0;i<W2.length;i++)W2[i]=rand()*s2; b1.fill(0); b2.fill(0);
+      AW1.fill(0);VW1.fill(0);AW2.fill(0);VW2.fill(0);Ab1.fill(0);Vb1.fill(0);Ab2.fill(0);Vb2.fill(0);
+    }
+    running=true; $("trainBtn").innerHTML="❚❚ &nbsp;Pause"; loop();
+  });
+  function generate(){
+    const box=$("samples"); box.innerHTML="";
+    for(let i=0;i<6;i++){ const s=sample(); const ok=TRAINSET.has(s.trim());
+      const d=document.createElement("div"); d.className="s"+(ok?"":" miss");
+      d.textContent=(ok?"✓ ":"· ")+(s||"—"); box.appendChild(d); }
+  }
+  $("genBtn").addEventListener("click",()=>{ if(stepN===0){ $("samples").innerHTML='<span class="shint">train the model first — the plot needs to come down</span>'; return;} generate(); });
+  plot();
 })();
 </script>
 </body>
