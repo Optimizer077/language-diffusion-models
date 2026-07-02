@@ -1,0 +1,11 @@
+# Core dependencies for the Language Diffusion Models course.
+# PyTorch is listed without a build suffix so pip resolves a wheel for your
+# platform. For a specific CPU/CUDA build, install torch first from
+# https://pytorch.org/get-started/locally/ then `pip install -r requirements.txt`.
+torch>=2.1
+numpy>=1.24
+matplotlib>=3.7
+
+# Notebook tooling (authoring + running the lessons).
+nbformat>=5.9
+jupyter>=1.0
