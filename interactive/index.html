@@ -158,6 +158,27 @@
   .cmp .row{font-family:"IBM Plex Mono",monospace; font-size:17px; letter-spacing:.03em; margin:10px 0; min-height:1.4em}
   .cmp .cap{color:var(--dim); font-size:13px; margin:0}
 
+  /* ---------- self-correction / remasking (Lesson 6) ---------- */
+  .trace{font-family:"IBM Plex Mono",monospace; display:flex; flex-wrap:wrap; gap:4px;
+    margin:12px 0 4px; min-height:30px}
+  .tok{min-width:20px; height:28px; padding:0 3px; display:inline-flex; align-items:center;
+    justify-content:center; border-radius:5px; font-size:15px; background:#1b1e25;
+    color:var(--amber); border:1px solid var(--line); transition:all .18s ease}
+  .tok.sp{min-width:9px; background:transparent; border:none}
+  .tok.mask{color:var(--mask); background:transparent; border-color:transparent}
+  .tok.bad{color:#fff; background:#cf6b57; border-color:#cf6b57}
+  .tok.fresh{color:#04121a; background:var(--teal); border-color:var(--teal)}
+  .tok.remask{color:var(--amber); background:transparent; border-color:var(--amber);
+    box-shadow:0 0 0 2px rgba(233,180,76,.35)}
+  .tracectl{display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:6px}
+  .tracectl .stepr{font-family:"IBM Plex Mono"; font-size:12px; color:var(--dim);
+    letter-spacing:.06em; text-transform:uppercase}
+  .zoo{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:22px}
+  @media(max-width:640px){.zoo{grid-template-columns:1fr 1fr}}
+  .zchip{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px}
+  .zchip b{font-family:"IBM Plex Mono"; font-size:12.5px; letter-spacing:.04em; color:var(--teal)}
+  .zchip span{display:block; color:var(--dim); font-size:12.5px; margin-top:5px; line-height:1.5}
+
   /* ---------- callout ---------- */
   .callout{margin-top:22px; padding:18px 22px; border-left:3px solid var(--amber);
     background:var(--amber-soft); border-radius:0 12px 12px 0; color:var(--ink); font-size:15px}
@@ -417,9 +438,53 @@
       <b>fast</b> — good text in a handful of steps instead of hundreds.</div>
   </section>
 
+  <!-- ============ SELF-CORRECTION / REMASKING (Lesson 6) ============ -->
+  <section class="block reveal-on-scroll">
+    <p class="eyebrow"><span class="num">04 —</span> the self-correction trick</p>
+    <h2>What if the model could <em>take a guess back</em>?</h2>
+    <p class="lede">Confidence-first has a catch: the instant you reveal a token, it's <b>frozen</b>. One
+      early bad draw becomes a permanent typo — every later step just builds around the mistake.
+      <b>Remasking</b> fixes this: if the model stops supporting a token it committed, un-mask it (<b
+      style="color:var(--amber)">↺</b>) and let a later, better-informed step re-fill it. Watch the same
+      run, both ways:</p>
+    <div class="compare">
+      <div class="cmp bad">
+        <h4>◇ commit &amp; freeze</h4>
+        <div class="trace" id="traceFreeze"></div>
+        <p class="cap">Position 5 was revealed as <b style="color:#cf6b57">b</b> early and locked. The run
+          finishes fluent but <b style="color:var(--ink)">wrong</b> — "bat", forever.</p>
+      </div>
+      <div class="cmp good">
+        <h4>◆ remask &amp; self-correct</h4>
+        <div class="trace" id="traceRemask"></div>
+        <p class="cap">Same bad draw — but a later step <b style="color:var(--amber)">un-commits</b> it
+          (↺) and re-fills it with the context now in place. Ends <b style="color:var(--ink)">correct</b>.</p>
+      </div>
+    </div>
+    <div class="tracectl">
+      <button class="btn play" id="tracePlay">▶ &nbsp;Play both</button>
+      <button class="btn ghost" id="traceStep">step ▸</button>
+      <button class="btn ghost" id="traceReset">⟲ &nbsp;Reset</button>
+      <span class="stepr">step <b id="traceN" style="color:var(--amber)">0</b></span>
+    </div>
+
+    <p class="lede" style="margin-top:30px">And confidence isn't the only way to pick <b>which</b> blank to
+      fill next. Lesson 6 races the whole <b>decoding zoo</b> — different scores for "which token is the
+      model surest about":</p>
+    <div class="zoo">
+      <div class="zchip"><b>confidence</b><span>highest probability of its top token wins the next reveal — the LLaDA / MaskGIT default.</span></div>
+      <div class="zchip"><b>margin</b><span>biggest gap between the top-2 tokens — reveals only where the model has clearly decided.</span></div>
+      <div class="zchip"><b>entropy</b><span>lowest entropy over the whole distribution — reveal the least-uncertain position.</span></div>
+      <div class="zchip"><b>random</b><span>the baseline: reveal in random order. Usually the worst — order really matters.</span></div>
+    </div>
+    <div class="callout">👆 One fixed model, big quality swings — <b>how</b> you decode is a lever as strong as
+      <b>what</b> you trained. Lesson 6 verifies remasking helps at <b>every</b> step budget.
+      <a href="../06_unmasking_strategies.ipynb">Open Lesson 6 ↗</a></div>
+  </section>
+
   <!-- ============ LIVE TRAINER ============ -->
   <section class="block reveal-on-scroll">
-    <p class="eyebrow"><span class="num">04 —</span> the real thing</p>
+    <p class="eyebrow"><span class="num">05 —</span> the real thing</p>
     <h2>Train a diffusion LM <em>live</em>, in your browser</h2>
     <p class="lede">Everything above was an animation. <b>This is not.</b> Press train and a real (tiny)
       masked-diffusion model — a small neural net with <b>hand-written backprop, no libraries</b> — learns
@@ -443,7 +508,7 @@
 
   <!-- ============ TRAINING ============ -->
   <section class="block reveal-on-scroll">
-    <p class="eyebrow"><span class="num">05 —</span> how it learns</p>
+    <p class="eyebrow"><span class="num">06 —</span> how it learns</p>
     <h2>The training idea, in <em>plain words</em></h2>
     <p class="lede">Strip away the theory and training is almost embarrassingly simple:</p>
     <div class="steps">
@@ -461,9 +526,10 @@
       <a class="card" href="../03_diffusion_lm_embedding_space.ipynb"><span class="n">03</span><span class="arw">↗</span><span class="t">Diffusion-LM</span><span class="d">letters → vectors; Gaussian noise + guidance</span></a>
       <a class="card" href="../04_scaling_diffusion_llm.ipynb"><span class="n">04</span><span class="arw">↗</span><span class="t">Scaling · LLaDA</span><span class="d">generalization, CFG, confidence sampling</span></a>
       <a class="card" href="../05_sedd_score_entropy.ipynb"><span class="n">05</span><span class="arw">↗</span><span class="t">SEDD</span><span class="d">learn the ratios (a discrete "score")</span></a>
+      <a class="card" href="../06_unmasking_strategies.ipynb"><span class="n">06</span><span class="arw">↗</span><span class="t">Unmasking</span><span class="d">reveal-order zoo + remasking / self-correction</span></a>
     </div>
     <div class="callout" style="margin-top:26px">Ready for the real thing? Every idea here is built
-      <b>from scratch and verified</b> in the five notebooks — tiny models you can train in seconds.
+      <b>from scratch and verified</b> in the six notebooks — tiny models you can train in seconds.
       Start with <a href="../01_foundations_masked_diffusion.ipynb">Lesson 1</a>.</div>
   </section>
 
@@ -646,6 +712,57 @@
     el("cmpRand").innerHTML=revealAt(t,"random",0.5);
   }
   syncCompare();
+
+  /* -------- self-correction / remasking trace (Lesson 6) -------- */
+  (function(){
+    const TT="the cat sat on the mat", N=TT.length, isSp=i=>TT[i]===" ";
+    function build(ops){
+      const st=Array.from({length:N},(_,i)=>isSp(i)?" ":"#");
+      const frames=[{st:st.slice(),mark:null}];
+      for(const op of ops){ for(const [i,ch] of op.rev) st[i]=ch;
+        frames.push({st:st.slice(),mark:op.mark||null}); }
+      return frames;
+    }
+    const base=[
+      {rev:[[0,'t'],[1,'h'],[2,'e'],[15,'t'],[16,'h'],[17,'e']]},
+      {rev:[[8,'s'],[9,'a'],[10,'t'],[19,'m'],[20,'a'],[21,'t']]},
+      {rev:[[12,'o'],[13,'n'],[5,'a'],[6,'t']]},
+      {rev:[[4,'b']],mark:{i:4,kind:'bad'}},
+    ];
+    const FZ=build(base);
+    const RM=build(base.concat([
+      {rev:[[4,'#']],mark:{i:4,kind:'remask'}},
+      {rev:[[4,'c']],mark:{i:4,kind:'fresh'}},
+    ]));
+    function render(f){
+      return f.st.map((c,i)=>{
+        if(c===" ") return '<span class="tok sp"></span>';
+        if(c==="#"){ return (f.mark&&f.mark.i===i&&f.mark.kind==='remask')
+          ? '<span class="tok remask">&#8635;</span>' : '<span class="tok mask">&#9646;</span>'; }
+        let cls='tok';
+        if(f.mark&&f.mark.i===i){ if(f.mark.kind==='bad')cls+=' bad'; if(f.mark.kind==='fresh')cls+=' fresh'; }
+        return '<span class="'+cls+'">'+c+'</span>';
+      }).join("");
+    }
+    let step=0, timer=null;
+    const PLAY='&#9654; &nbsp;Play both', PAUSE='&#10073;&#10073; &nbsp;Pause';
+    function draw(){
+      el("traceFreeze").innerHTML=render(FZ[Math.min(step,FZ.length-1)]);
+      el("traceRemask").innerHTML=render(RM[Math.min(step,RM.length-1)]);
+      el("traceN").textContent=step;
+    }
+    function stop(){ if(timer){clearInterval(timer);timer=null;} el("tracePlay").innerHTML=PLAY; }
+    function next(){ if(step<RM.length-1){ step++; draw(); return true;} return false; }
+    el("tracePlay").addEventListener("click",()=>{
+      if(timer){ stop(); return; }
+      if(step>=RM.length-1) step=0;
+      el("tracePlay").innerHTML=PAUSE;
+      timer=setInterval(()=>{ if(!next()) stop(); },900);
+    });
+    el("traceStep").addEventListener("click",()=>{ stop(); next(); });
+    el("traceReset").addEventListener("click",()=>{ stop(); step=0; draw(); });
+    draw();
+  })();
 
   /* ---------------- scroll reveals ---------------- */
   const revs=document.querySelectorAll(".reveal-on-scroll");
