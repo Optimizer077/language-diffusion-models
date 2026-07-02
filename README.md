@@ -12,6 +12,10 @@
   <img alt="Status" src="https://img.shields.io/badge/Lessons%201--5-complete-success">
 </p>
 
+<p align="center">
+  <b><a href="https://optimizer077.github.io/language-diffusion-models/interactive/">🔴&nbsp; Live interactive demo</a></b> &nbsp;—&nbsp; watch text denoise, then <b>train a real model in your browser</b>.
+</p>
+
 ---
 
 ## Why this course?
@@ -26,12 +30,12 @@ You'll build the masking models behind **MDLM** and **LLaDA**, the general **D3P
 ## 🎮 Try it first — interactive playground
 
 <p align="center">
-  <a href="interactive/index.html"><img src="interactive/demo.gif" alt="A sentence dissolving into noise and re-forming — the interactive diffusion playground" width="820"></a>
+  <a href="https://optimizer077.github.io/language-diffusion-models/interactive/"><img src="interactive/demo.gif" alt="A sentence dissolving into noise and re-forming — the interactive diffusion playground" width="820"></a>
 </p>
 
-Before the math, get the *feel*: **[▶ open the interactive playground](interactive/index.html)**. Watch a sentence dissolve into noise and re-form, scrub the noise level, toggle the noise **kernel** (mask vs. random), step through the **reverse-trajectory filmstrip**, compare **confidence-first vs. random** unmasking, and poke a live **transition matrix** — an intuition-first visual tour of Lessons 1, 2 & 4. (The animation above is the real page.)
+Before the math, get the *feel*: **[▶ open the live interactive playground](https://optimizer077.github.io/language-diffusion-models/interactive/)**. Watch a sentence dissolve into noise and re-form, scrub the noise level, toggle the noise **kernel** (mask vs. random), step through the **reverse-trajectory filmstrip**, compare **confidence-first vs. random** unmasking, poke a live **transition matrix** — and then **train a real masked-diffusion model right in your browser** (hand-written backprop, live loss plot, and generation). An intuition-first tour of Lessons 1, 2 & 4. (The animation above is the real page.)
 
-> It's one self-contained HTML file, no install. **Clone the repo and open `interactive/index.html` in any browser**, or enable **GitHub Pages** (Settings → Pages → deploy from `main`) to get a live shareable link.
+> Runs entirely client-side — no install, no server. Or clone the repo and open `interactive/index.html` in any browser.
 
 ## Quickstart
 
