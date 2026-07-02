@@ -10,6 +10,7 @@
   <img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-CPU%20or%20CUDA-ee4c2c">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-green">
   <img alt="Status" src="https://img.shields.io/badge/Lessons%201--6-complete-success">
+  <a href="https://github.com/Optimizer077/language-diffusion-models/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Optimizer077/language-diffusion-models/actions/workflows/ci.yml/badge.svg"></a>
 </p>
 
 <p align="center">
@@ -48,8 +49,12 @@ pip install -r requirements.txt
 jupyter notebook 01_foundations_masked_diffusion.ipynb
 ```
 
+**Prefer zero install?** Every notebook has an **[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Optimizer077/language-diffusion-models/blob/main/01_foundations_masked_diffusion.ipynb)** badge at the top — click it to run the lesson on a free GPU in your browser, nothing to install.
+
 The models are intentionally tiny — everything runs on a **laptop CPU in a minute
 or two**. The notebooks auto-detect a GPU (`device = "cuda" if torch.cuda.is_available() else "cpu"`) and use it when present.
+
+Every push is checked by [CI](.github/workflows/ci.yml): the two math oracles run, all six notebooks are rebuilt from their `tools/build_lesson*.py` scripts, and each is smoke-tested end-to-end.
 
 ## The lessons
 

@@ -19,7 +19,9 @@ def md(src):   cells.append(new_markdown_cell(src))
 def code(src): cells.append(new_code_cell(src))
 
 # ===========================================================================
-md(r"""# Lesson 6 — Unmasking Strategies (the decoding zoo)
+md(r"""[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Optimizer077/language-diffusion-models/blob/main/06_unmasking_strategies.ipynb)
+
+# Lesson 6 — Unmasking Strategies (the decoding zoo)
 ### Same model, wildly different results — it's all in *how you reveal*
 
 The model is done training. Now comes a secret that matters more than most people

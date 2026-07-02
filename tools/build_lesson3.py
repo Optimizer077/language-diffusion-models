@@ -18,7 +18,9 @@ def md(src):   cells.append(new_markdown_cell(src))
 def code(src): cells.append(new_code_cell(src))
 
 # ===========================================================================
-md(r"""# Lesson 3 — Diffusion in *Continuous* Space (Diffusion-LM)
+md(r"""[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Optimizer077/language-diffusion-models/blob/main/03_diffusion_lm_embedding_space.ipynb)
+
+# Lesson 3 — Diffusion in *Continuous* Space (Diffusion-LM)
 ### Stop corrupting letters; start corrupting *vectors*
 
 In Lessons 1 and 2 the noise acted directly on **letters**: blank one out, or swap

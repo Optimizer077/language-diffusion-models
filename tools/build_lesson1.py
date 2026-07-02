@@ -13,7 +13,9 @@ def md(src):  cells.append(new_markdown_cell(src))
 def code(src): cells.append(new_code_cell(src))
 
 # ----------------------------------------------------------------------------
-md(r"""# Lesson 1 — Foundations of Language Diffusion Models
+md(r"""[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Optimizer077/language-diffusion-models/blob/main/01_foundations_masked_diffusion.ipynb)
+
+# Lesson 1 — Foundations of Language Diffusion Models
 ### Masked (absorbing-state) discrete diffusion, from scratch
 
 Welcome — this is the first lesson, and the front door to the whole course. By the

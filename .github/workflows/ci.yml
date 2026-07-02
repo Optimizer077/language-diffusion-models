@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies (CPU PyTorch)
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install numpy matplotlib nbformat
+
+      - name: Math oracles (D3PM + SEDD)
+        run: |
+          python tools/d3pm_reference_check.py
+          python tools/sedd_reference_check.py
+
+      - name: Rebuild notebooks from their build scripts
+        run: |
+          for f in tools/build_lesson*.py; do echo "-> $f"; python "$f"; done
+
+      - name: Smoke-test every notebook end-to-end
+        run: python tools/smoke_test.py

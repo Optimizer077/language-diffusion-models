@@ -20,7 +20,9 @@ def md(src):   cells.append(new_markdown_cell(src))
 def code(src): cells.append(new_code_cell(src))
 
 # ===========================================================================
-md(r"""# Lesson 5 — Score-Entropy Discrete Diffusion (SEDD)
+md(r"""[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Optimizer077/language-diffusion-models/blob/main/05_sedd_score_entropy.ipynb)
+
+# Lesson 5 — Score-Entropy Discrete Diffusion (SEDD)
 ### The advanced capstone: learn the *ratios*, not the posterior
 
 Every model so far answered the question **"what was the clean token?"** — Lesson 1

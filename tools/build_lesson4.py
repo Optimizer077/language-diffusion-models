@@ -18,7 +18,9 @@ def md(src):   cells.append(new_markdown_cell(src))
 def code(src): cells.append(new_code_cell(src))
 
 # ===========================================================================
-md(r"""# Lesson 4 — Making Masked Diffusion *Practical* (LLaDA-style)
+md(r"""[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Optimizer077/language-diffusion-models/blob/main/04_scaling_diffusion_llm.ipynb)
+
+# Lesson 4 — Making Masked Diffusion *Practical* (LLaDA-style)
 ### Generalization, guidance, and fast sampling
 
 Lessons 1–3 built the *ideas*. This lesson is about the *engineering* that turns a

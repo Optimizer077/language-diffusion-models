@@ -18,7 +18,9 @@ def md(src):   cells.append(new_markdown_cell(src))
 def code(src): cells.append(new_code_cell(src))
 
 # ===========================================================================
-md(r"""# Lesson 2 — General Transition Kernels (D3PM)
+md(r"""[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Optimizer077/language-diffusion-models/blob/main/02_d3pm_transition_kernels.ipynb)
+
+# Lesson 2 — General Transition Kernels (D3PM)
 ### From one kind of noise to *any* kind
 
 Welcome back! In **Lesson 1** we built a "fill-in-the-blanks" language model.
