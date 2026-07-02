@@ -23,6 +23,16 @@ Most explanations of language diffusion are either a wall of equations or a blac
 
 You'll build the masking models behind **MDLM** and **LLaDA**, the general **D3PM** framework, embedding-space diffusion (**Diffusion-LM**), a scaled-up conditional diffusion LLM, and score-entropy diffusion (**SEDD**) — all from scratch.
 
+## 🎮 Try it first — interactive playground
+
+<p align="center">
+  <a href="interactive/index.html"><img src="interactive/preview.png" alt="Interactive language-diffusion playground" width="760"></a>
+</p>
+
+Before the math, get the *feel*: **[▶ open the interactive playground](interactive/index.html)**. Watch a sentence dissolve into noise and re-form, drag the noise level, toggle the noise **kernel** (mask vs. random), compare **confidence-first vs. random** unmasking, and poke an interactive **transition matrix** — an intuition-first visual tour of Lessons 1, 2 & 4.
+
+> It's one self-contained HTML file, no install. **Clone the repo and open `interactive/index.html` in any browser**, or enable **GitHub Pages** (Settings → Pages → deploy from `main`) to get a live shareable link.
+
 ## Quickstart
 
 ```bash
@@ -72,6 +82,7 @@ or two**. The notebooks auto-detect a GPU (`device = "cuda" if torch.cuda.is_ava
 ├── 03_diffusion_lm_embedding_space.ipynb  ← Lesson 3
 ├── 04_scaling_diffusion_llm.ipynb         ← Lesson 4
 ├── 05_sedd_score_entropy.ipynb            ← Lesson 5
+├── interactive/                           ← self-contained interactive playground (index.html)
 ├── papers/                                ← the cited papers (PDFs) + a per-lesson index
 ├── reference/
 │   └── D3PM_MATH.md                       ← worked, validated D3PM math

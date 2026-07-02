@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Language Diffusion · Interactive Playground</title>
+<meta name="description" content="Watch text dissolve into noise and re-form — an interactive, intuition-first companion to the Language Diffusion Models course." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0b0c10; --bg2:#121419; --panel:#15171d;
+    --ink:#ece8df; --dim:#7c818b; --faint:#40444c;
+    --mask:#333842; --noise:#6f8f86;
+    --amber:#e9b44c; --amber-soft:rgba(233,180,76,.16);
+    --teal:#6f8f86;  --teal-soft:rgba(111,143,134,.16);
+    --line:#22252c; --shadow:0 24px 60px -20px rgba(0,0,0,.7);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; min-height:100%;
+    background:radial-gradient(120% 70% at 50% -8%, #1a1d24 0%, var(--bg) 52%, #060709 100%) fixed;
+    color:var(--ink); font-family:"IBM Plex Sans",system-ui,sans-serif; line-height:1.55;
+    overflow-x:hidden; -webkit-font-smoothing:antialiased;}
+  body::after{content:""; position:fixed; inset:0; z-index:9; pointer-events:none; opacity:.045;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode:overlay;}
+  .wrap{max-width:960px; margin:0 auto; padding:clamp(28px,5vw,64px) 22px 90px}
+  a{color:var(--amber)}
+
+  /* ---------- header ---------- */
+  header{opacity:0; animation:rise .8s .05s cubic-bezier(.2,.7,.2,1) forwards}
+  .kicker{font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.34em;
+    text-transform:uppercase; color:var(--amber); margin:0 0 14px}
+  .kicker::before{content:"◆ "; color:var(--faint)}
+  h1{font-family:"Fraunces",serif; font-weight:600; font-size:clamp(38px,7.4vw,74px);
+    line-height:.98; letter-spacing:-.02em; margin:0 0 8px}
+  h1 em{font-style:italic; color:var(--amber); font-weight:500}
+  .sub{color:var(--dim); max-width:58ch; font-size:16px; margin:0}
+  .sub b{color:var(--ink); font-weight:500}
+
+  /* ---------- section scaffolding ---------- */
+  section.block{margin-top:clamp(46px,8vw,86px)}
+  .eyebrow{font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.24em;
+    text-transform:uppercase; color:var(--amber); margin:0 0 10px}
+  .eyebrow .num{color:var(--faint)}
+  h2{font-family:"Fraunces",serif; font-weight:600; font-size:clamp(26px,4.4vw,40px);
+    letter-spacing:-.01em; line-height:1.05; margin:0 0 12px}
+  h2 em{font-style:italic; color:var(--amber); font-weight:500}
+  .lede{color:var(--dim); max-width:64ch; font-size:16px; margin:0 0 24px}
+  .lede b{color:var(--ink); font-weight:500}
+
+  /* ---------- stage (playground) ---------- */
+  .stage{margin-top:clamp(30px,5vw,48px); padding:clamp(24px,4vw,40px) clamp(20px,3vw,34px);
+    background:linear-gradient(180deg,var(--panel),#0f1116); border:1px solid var(--line);
+    border-radius:18px; box-shadow:var(--shadow); position:relative; overflow:hidden;
+    opacity:0; animation:rise .8s .18s cubic-bezier(.2,.7,.2,1) forwards}
+  .stage::before{content:""; position:absolute; inset:0; pointer-events:none;
+    background:repeating-linear-gradient(180deg,transparent 0 3px,rgba(255,255,255,.012) 3px 4px)}
+  .readout{display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap;
+    font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--dim); margin-bottom:20px}
+  .readout b{color:var(--amber); font-weight:600}
+  .readout .k{color:var(--ink)}
+  .phase{padding:3px 10px; border:1px solid var(--line); border-radius:20px; color:var(--amber)}
+
+  #text{font-family:"IBM Plex Mono",monospace; font-size:clamp(19px,4.3vw,34px); font-weight:500;
+    letter-spacing:.02em; line-height:1.7; word-break:break-word; min-height:2.4em; display:flex; flex-wrap:wrap}
+  .ch{display:inline-block; width:.62em; text-align:center; position:relative;
+    transition:color .28s ease, transform .28s cubic-bezier(.2,.8,.2,1), opacity .28s ease}
+  .ch.space{width:.32em}
+  .ch.reveal{color:var(--amber); text-shadow:0 0 14px var(--amber-soft)}
+  .ch.reveal.pop{animation:pop .34s cubic-bezier(.2,.9,.2,1)}
+  .ch.mask{color:var(--mask); transform:translateY(1px)}
+  .ch.rand{color:var(--noise); opacity:.82}
+
+  .controls{display:grid; gap:20px; margin-top:26px; grid-template-columns:1fr 1fr;
+    opacity:0; animation:rise .8s .3s cubic-bezier(.2,.7,.2,1) forwards}
+  @media(max-width:640px){.controls{grid-template-columns:1fr}}
+  .field{background:var(--bg2); border:1px solid var(--line); border-radius:14px; padding:16px 18px}
+  .field.span{grid-column:1/-1}
+  .label{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.22em;
+    text-transform:uppercase; color:var(--dim); display:block; margin-bottom:12px}
+  .seg{display:flex; gap:6px; background:#0c0e12; padding:5px; border-radius:10px; border:1px solid var(--line)}
+  .seg button{flex:1; font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--dim);
+    background:transparent; border:0; padding:9px 8px; border-radius:7px; cursor:pointer; transition:.2s}
+  .seg button:hover{color:var(--ink)}
+  .seg button.on{background:var(--amber); color:#171200; font-weight:600}
+  .seg.teal button.on{background:var(--teal); color:#08110e}
+  input[type=text]{width:100%; background:#0c0e12; border:1px solid var(--line); border-radius:10px;
+    color:var(--ink); font-family:"IBM Plex Mono",monospace; font-size:15px; padding:11px 13px; outline:none; transition:.2s}
+  input[type=text]:focus{border-color:var(--amber); box-shadow:0 0 0 3px var(--amber-soft)}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:4px; border-radius:4px;
+    background:linear-gradient(90deg,var(--amber) var(--fill,0%),var(--faint) var(--fill,0%)); cursor:pointer}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:18px; height:18px; border-radius:50%;
+    background:var(--ink); border:3px solid var(--amber); box-shadow:0 2px 10px rgba(0,0,0,.5)}
+  input[type=range]::-moz-range-thumb{width:16px; height:16px; border-radius:50%; background:var(--ink); border:3px solid var(--amber)}
+  .actions{display:flex; gap:12px; align-items:center; flex-wrap:wrap}
+  .btn{font-family:"IBM Plex Mono",monospace; font-size:14px; letter-spacing:.04em; cursor:pointer;
+    border-radius:11px; padding:12px 22px; border:1px solid var(--line); transition:.2s; display:inline-flex; align-items:center; gap:9px}
+  .btn.play{background:var(--amber); color:#171200; border-color:var(--amber); font-weight:600}
+  .btn.play:hover{transform:translateY(-1px); box-shadow:0 10px 26px -8px var(--amber-soft)}
+  .btn.ghost{background:transparent; color:var(--dim)}
+  .btn.ghost:hover{color:var(--ink); border-color:var(--dim)}
+  .speed{margin-left:auto; display:flex; align-items:center; gap:9px; color:var(--dim);
+    font-family:"IBM Plex Mono",monospace; font-size:12px}
+  .speed input{width:96px}
+
+  .legend{display:flex; gap:22px; flex-wrap:wrap; margin:22px 2px 0;
+    font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--dim)}
+  .legend span{display:inline-flex; align-items:center; gap:8px}
+  .dot{width:10px; height:10px; border-radius:3px; display:inline-block}
+  .note{margin-top:16px; color:var(--dim); font-size:13.5px; max-width:70ch}
+  .note b{color:var(--ink); font-weight:500}
+
+  /* ---------- process stepper ---------- */
+  .steps{display:grid; gap:14px}
+  .step{display:grid; grid-template-columns:auto 1fr; gap:20px; align-items:start;
+    background:var(--panel); border:1px solid var(--line); border-radius:15px; padding:20px 22px;
+    transition:.22s}
+  .step:hover{border-color:var(--line); background:#171a20}
+  .step .idx{font-family:"Fraunces",serif; font-size:34px; font-weight:600; color:var(--amber);
+    line-height:1; min-width:44px; opacity:.9}
+  .step h3{margin:2px 0 6px; font-size:17px; font-weight:600; font-family:"IBM Plex Sans"}
+  .step p{margin:0; color:var(--dim); font-size:14.5px}
+  .step p b{color:var(--ink); font-weight:500}
+  .demo{font-family:"IBM Plex Mono",monospace; font-size:14px; margin-top:12px; letter-spacing:.02em; color:var(--dim)}
+  .demo .m{color:var(--mask)} .demo .g{color:var(--amber)} .demo .r{color:var(--noise)}
+  .demo .arrow{color:var(--faint); padding:0 8px}
+
+  /* ---------- kernel + matrix ---------- */
+  .kwrap{display:grid; grid-template-columns:1fr auto; gap:26px; align-items:center;
+    background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px; box-shadow:var(--shadow)}
+  @media(max-width:640px){.kwrap{grid-template-columns:1fr}}
+  .matrix{display:grid; gap:3px; padding:12px; background:#0c0e12; border:1px solid var(--line); border-radius:12px}
+  .matrix .cell{width:26px; height:26px; border-radius:4px; background:var(--amber);
+    display:flex; align-items:center; justify-content:center; font-family:"IBM Plex Mono"; font-size:9px; color:#000; transition:.25s}
+  .matrix .axis{width:26px; height:26px; font-family:"IBM Plex Mono"; font-size:11px; color:var(--faint);
+    display:flex; align-items:center; justify-content:center}
+  .kcap{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--dim); text-align:center; margin-top:10px}
+  #kernelWord{font-family:"IBM Plex Mono",monospace; font-size:26px; letter-spacing:.03em; margin:6px 0 18px}
+  .mini-seg{margin-bottom:16px}
+
+  /* ---------- compare (confidence vs random) ---------- */
+  .compare{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+  @media(max-width:640px){.compare{grid-template-columns:1fr}}
+  .cmp{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px 20px}
+  .cmp h4{margin:0 0 4px; font-family:"IBM Plex Mono"; font-size:12px; letter-spacing:.14em; text-transform:uppercase}
+  .cmp.good h4{color:var(--amber)} .cmp.bad h4{color:var(--noise)}
+  .cmp .row{font-family:"IBM Plex Mono",monospace; font-size:17px; letter-spacing:.03em; margin:10px 0; min-height:1.4em}
+  .cmp .cap{color:var(--dim); font-size:13px; margin:0}
+
+  /* ---------- callout ---------- */
+  .callout{margin-top:22px; padding:18px 22px; border-left:3px solid var(--amber);
+    background:var(--amber-soft); border-radius:0 12px 12px 0; color:var(--ink); font-size:15px}
+  .callout b{color:var(--amber)}
+
+  /* ---------- lesson map ---------- */
+  .cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(168px,1fr)); gap:12px}
+  a.card{text-decoration:none; color:var(--ink); background:var(--panel); border:1px solid var(--line);
+    border-radius:13px; padding:16px 15px; transition:.22s; display:block; position:relative; overflow:hidden}
+  a.card:hover{border-color:var(--amber); transform:translateY(-3px); box-shadow:var(--shadow)}
+  a.card .n{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--amber); letter-spacing:.1em}
+  a.card .t{display:block; margin-top:7px; font-size:14px; line-height:1.35}
+  a.card .d{display:block; margin-top:6px; font-size:12px; color:var(--dim); line-height:1.4}
+  a.card .arw{position:absolute; top:14px; right:14px; color:var(--faint); transition:.22s}
+  a.card:hover .arw{color:var(--amber); transform:translate(2px,-2px)}
+
+  footer{margin-top:64px; padding-top:22px; border-top:1px solid var(--line);
+    display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--faint)}
+  footer a{color:var(--dim); text-decoration:none} footer a:hover{color:var(--amber)}
+
+  @keyframes rise{from{opacity:0; transform:translateY(18px)} to{opacity:1; transform:none}}
+  @keyframes pop{0%{transform:translateY(6px) scale(.7); opacity:0} 60%{transform:translateY(-2px) scale(1.06)} 100%{transform:none}}
+  .reveal-on-scroll{opacity:0; transform:translateY(22px); transition:opacity .7s, transform .7s}
+  .reveal-on-scroll.in{opacity:1; transform:none}
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important; transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="kicker">Language Diffusion Models · Interactive</p>
+    <h1>Watch text <em>dissolve</em><br/>and re-form.</h1>
+    <p class="sub">Autoregressive models (like GPT) write left-to-right, one token at a time.
+      <b>Diffusion</b> models do something stranger: they start from pure noise and
+      <b>denoise the whole sentence at once</b>, over many small steps. Scroll to build the whole
+      idea from the ground up — drag, toggle, and play at every step.</p>
+  </header>
+
+  <!-- ============ PLAYGROUND ============ -->
+  <section class="stage" id="play-stage">
+    <div class="readout">
+      <span>noise&nbsp; t = <b id="tval">1.00</b></span>
+      <span>step <span class="k" id="step">0</span> / <span class="k" id="steps">0</span></span>
+      <span class="phase" id="mode">pure noise</span>
+    </div>
+    <div id="text" aria-label="diffusing text"></div>
+
+    <div class="controls">
+      <div class="field">
+        <span class="label">Kernel — what the noise is</span>
+        <div class="seg" id="kernel">
+          <button data-k="absorbing" class="on">absorbing · [MASK]</button>
+          <button data-k="uniform">uniform · random</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="label">Reveal order — how it unmasks</span>
+        <div class="seg teal" id="strategy">
+          <button data-s="confidence" class="on">confidence-first</button>
+          <button data-s="random">random</button>
+        </div>
+      </div>
+      <div class="field span">
+        <span class="label">Noise level&nbsp; ( 0 = clean · 1 = pure noise )</span>
+        <input type="range" id="slider" min="0" max="1" step="0.001" value="1" />
+      </div>
+      <div class="field span">
+        <div class="actions">
+          <button class="btn play" id="play">▶ &nbsp;Play denoising</button>
+          <button class="btn ghost" id="reset">⟲ &nbsp;Reset to noise</button>
+          <span class="speed">speed <input type="range" id="speed" min="1" max="10" step="1" value="6" /></span>
+        </div>
+      </div>
+      <div class="field span">
+        <span class="label">Your sentence</span>
+        <input type="text" id="input" maxlength="60" value="the cat sat on the mat" />
+      </div>
+    </div>
+  </section>
+
+  <div class="legend">
+    <span><i class="dot" style="background:var(--amber)"></i> revealed (true letter)</span>
+    <span><i class="dot" style="background:var(--mask)"></i> [MASK] — absorbing</span>
+    <span><i class="dot" style="background:var(--noise)"></i> random letter — uniform</span>
+  </div>
+  <p class="note"><b>Try it:</b> drag the noise slider, then press <b>Play</b> to watch the sentence
+    denoise. Switch the <b>kernel</b> to see the two kinds of noise, and flip <b>reveal order</b> to
+    feel why confident-first beats random. <em>This animates the ideas — it is not the trained model.</em></p>
+
+  <!-- ============ PROCESS ============ -->
+  <section class="block reveal-on-scroll">
+    <p class="eyebrow"><span class="num">01 —</span> the whole idea</p>
+    <h2>Diffusion, in <em>four moves</em></h2>
+    <p class="lede">Every diffusion model — for images or text — is the same loop: <b>break it, then
+      learn to fix it.</b> Here it is end to end.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="idx">1</div>
+        <div>
+          <h3>Start with clean text</h3>
+          <p>A real sentence from the data — this is the target. The model <b>never sees it</b> at
+            generation time; it has to invent one like it.</p>
+          <div class="demo"><span class="g">the cat sat on the mat</span></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="idx">2</div>
+        <div>
+          <h3>Add noise — the <em>forward</em> process</h3>
+          <p>Corrupt letters, more and more, until nothing is left. Corruption needs <b>no learning</b>
+            — it's a coin flip per letter. Fully-noised text carries <b>zero information</b> about the
+            original, which is why generation can start from it.</p>
+          <div class="demo"><span class="g">the cat</span><span class="arrow">→</span><span class="g">t</span><span class="m">▦</span><span class="g">e c</span><span class="m">▦</span><span class="g">t</span><span class="arrow">→</span><span class="m">▦▦▦&nbsp;▦▦▦</span></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="idx">3</div>
+        <div>
+          <h3>Train a denoiser to undo one step</h3>
+          <p>Show a transformer the corrupted text and ask it to <b>guess the blanks</b>. Measure how
+            wrong (cross-entropy) and nudge. Because it reads the <b>whole sentence at once</b>
+            (left <em>and</em> right context), filling a blank in the middle is as easy as at the edge.</p>
+          <div class="demo"><span class="g">t</span><span class="m">▦</span><span class="g">e c</span><span class="m">▦</span><span class="g">t</span><span class="arrow">— guess →</span><span class="g">the cat</span></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="idx">4</div>
+        <div>
+          <h3>Generate — run it <em>backward</em></h3>
+          <p>Start from pure noise and denoise step by step, revealing the sentence as you go. No
+            left-to-right order — the <b>whole sequence sharpens in parallel</b>. That's the playground
+            above, and the practical win: you choose how many steps to spend.</p>
+          <div class="demo"><span class="m">▦▦▦&nbsp;▦▦▦</span><span class="arrow">→</span><span class="g">th</span><span class="m">▦</span><span class="g">&nbsp;c</span><span class="m">▦</span><span class="g">t</span><span class="arrow">→</span><span class="g">the cat</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="callout">👆 <b>Intuition:</b> autoregressive models paint left-to-right like typing;
+      diffusion is more like a photo developing — the <b>whole</b> image (sentence) emerges at once,
+      blurry to sharp. That parallelism is the reason people are excited about diffusion LLMs.</div>
+  </section>
+
+  <!-- ============ KERNELS ============ -->
+  <section class="block reveal-on-scroll">
+    <p class="eyebrow"><span class="num">02 —</span> what the noise <em>is</em></p>
+    <h2>Two flavors of noise</h2>
+    <p class="lede">"Noise" is just a rule for what a letter turns into next step. Write that rule as a
+      little table of probabilities — the <b>transition matrix</b> $Q_t$ — and you've chosen your
+      diffusion (Lesson 2). Pick a kernel and drag the corruption rate:</p>
+
+    <div class="kwrap">
+      <div>
+        <div class="seg mini-seg" id="kernel2" style="max-width:340px">
+          <button data-k="absorbing" class="on">absorbing · [MASK]</button>
+          <button data-k="uniform">uniform · random</button>
+        </div>
+        <div id="kernelWord"></div>
+        <label class="label" style="margin-bottom:8px">corruption rate β = <span id="bval" style="color:var(--amber)">0.30</span></label>
+        <input type="range" id="beta" min="0.05" max="0.95" step="0.01" value="0.30" style="max-width:340px"/>
+        <p id="kernelDesc" class="cap" style="text-align:left; margin-top:16px; max-width:44ch"></p>
+      </div>
+      <div>
+        <div class="matrix" id="matrix"></div>
+        <p class="kcap">rows = from · columns = to · brighter = more likely</p>
+      </div>
+    </div>
+
+    <div class="callout">👆 <b>Why masking wins:</b> a <b>[MASK]</b> is an explicit "fix me here" flag —
+      the model knows exactly which letters are missing. A <b>random</b> letter is indistinguishable
+      from a real one, so the model can't even tell what's corrupted. That's why modern diffusion LLMs
+      (MDLM, <b>LLaDA</b>) use the masking kernel.</div>
+  </section>
+
+  <!-- ============ REVEAL ORDER ============ -->
+  <section class="block reveal-on-scroll">
+    <p class="eyebrow"><span class="num">03 —</span> the sampling trick</p>
+    <h2>Why reveal the <em>confident</em> letters first?</h2>
+    <p class="lede">When you denoise, you decide <b>which</b> blanks to fill each step. Fill the ones
+      you're sure about first, and they pin down the rest. Here's the same sentence, both ways, at the
+      same halfway point:</p>
+    <div class="compare">
+      <div class="cmp good">
+        <h4>◆ confidence-first</h4>
+        <div class="row" id="cmpConf"></div>
+        <p class="cap">Structure locks in early — words are already legible. Stays coherent with
+          <b style="color:var(--ink)">far fewer steps</b>.</p>
+      </div>
+      <div class="cmp bad">
+        <h4>◇ random order</h4>
+        <div class="row" id="cmpRand"></div>
+        <p class="cap">Reveals are scattered — no word is whole yet, so later guesses have less to go
+          on. Needs many more steps to recover.</p>
+      </div>
+    </div>
+    <div class="callout">👆 This is <b>MaskGIT / LLaDA</b> confidence sampling (Lesson 4): commit the
+      most-certain tokens first. It's the single biggest lever for making diffusion generation
+      <b>fast</b> — good text in a handful of steps instead of hundreds.</div>
+  </section>
+
+  <!-- ============ TRAINING ============ -->
+  <section class="block reveal-on-scroll">
+    <p class="eyebrow"><span class="num">04 —</span> how it learns</p>
+    <h2>The training idea, in <em>plain words</em></h2>
+    <p class="lede">Strip away the theory and training is almost embarrassingly simple:</p>
+    <div class="steps">
+      <div class="step"><div class="idx">·</div><div><p style="color:var(--ink); font-size:16px; margin:0">
+        <b>Blank</b> some letters → <b>ask</b> the model to guess them → <b>measure</b> how wrong
+        (cross-entropy) → <b>nudge</b> the weights. Repeat a few thousand times.</p></div></div>
+    </div>
+    <p class="lede" style="margin-top:22px">That's it. The intimidating "diffusion math" (the <b>ELBO</b>)
+      mostly just tells you <b>how much to weight each noise level</b> — noisier examples vs. nearly-clean
+      ones. Each lesson in the course is a different, verified answer to <em>"what exactly should the
+      network predict, and how do we weight it?"</em></p>
+    <div class="cards" style="margin-top:8px">
+      <a class="card" href="../01_foundations_masked_diffusion.ipynb"><span class="n">01</span><span class="arw">↗</span><span class="t">Masked diffusion</span><span class="d">predict the blanked token (weighted cross-entropy)</span></a>
+      <a class="card" href="../02_d3pm_transition_kernels.ipynb"><span class="n">02</span><span class="arw">↗</span><span class="t">D3PM kernels</span><span class="d">any noise as a matrix; the ELBO term by term</span></a>
+      <a class="card" href="../03_diffusion_lm_embedding_space.ipynb"><span class="n">03</span><span class="arw">↗</span><span class="t">Diffusion-LM</span><span class="d">letters → vectors; Gaussian noise + guidance</span></a>
+      <a class="card" href="../04_scaling_diffusion_llm.ipynb"><span class="n">04</span><span class="arw">↗</span><span class="t">Scaling · LLaDA</span><span class="d">generalization, CFG, confidence sampling</span></a>
+      <a class="card" href="../05_sedd_score_entropy.ipynb"><span class="n">05</span><span class="arw">↗</span><span class="t">SEDD</span><span class="d">learn the ratios (a discrete "score")</span></a>
+    </div>
+    <div class="callout" style="margin-top:26px">Ready for the real thing? Every idea here is built
+      <b>from scratch and verified</b> in the five notebooks — tiny models you can train in seconds.
+      Start with <a href="../01_foundations_masked_diffusion.ipynb">Lesson 1</a>.</div>
+  </section>
+
+  <footer>
+    <span>Language Diffusion Models · a from-scratch course</span>
+    <span><a href="../README.md">README</a> · <a href="../CONTENT.md">syllabus</a> · <a href="../papers/">papers</a></span>
+  </footer>
+</div>
+
+<script>
+(() => {
+  const RAND = "abcdefghijklmnopqrstuvwxyz";
+  const COMMON = "etaoinshrdlu";
+  const el = id => document.getElementById(id);
+  const hash = str => { let h=2166136261; for(const c of str){ h^=c.charCodeAt(0); h=Math.imul(h,16777619);} return h>>>0; };
+  const seeded = seed => { let s=seed>>>0; return () => (s=(s*1664525+1013904223)>>>0)/4294967296; };
+
+  /* ---------------- playground ---------------- */
+  const textEl = el("text");
+  const S = { text:"the cat sat on the mat", kernel:"absorbing", strategy:"confidence",
+              t:1, per:[], order:[], revealedPrev:new Set(), playing:false, raf:null, speed:6 };
+
+  function build(){
+    const rng = seeded(hash(S.text));
+    S.per = [...S.text].map(ch => ({ ch, isSpace: ch===" ", rand: RAND[Math.floor(rng()*RAND.length)] }));
+    computeOrder();
+    textEl.innerHTML = "";
+    S.per.forEach(() => textEl.appendChild(Object.assign(document.createElement("span"),{className:"ch"})));
+    S.revealedPrev = new Set(); render();
+  }
+  function computeOrder(){
+    const n=S.per.length, idx=[...Array(n).keys()];
+    if(S.strategy==="random"){ const rng=seeded(hash(S.text)^0x9e37);
+      for(let i=n-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [idx[i],idx[j]]=[idx[j],idx[i]]; } S.order=idx; }
+    else { const score=i=>{ const c=S.per[i].ch; if(c===" ")return 100; const r=COMMON.indexOf(c); return r>=0?60-r:20; };
+      S.order=idx.sort((a,b)=>score(b)-score(a)||a-b); }
+  }
+  function render(pop=false){
+    const n=S.per.length, revealCount=Math.round((1-S.t)*n);
+    const revealed=new Set(S.order.slice(0,revealCount)), cells=textEl.children;
+    for(let i=0;i<n;i++){
+      const cell=cells[i], p=S.per[i]; let cls="ch"+(p.isSpace?" space":""), glyph;
+      if(revealed.has(i)){ cls+=" reveal"+(pop&&!S.revealedPrev.has(i)?" pop":""); glyph=p.isSpace?" ":p.ch; }
+      else if(S.kernel==="absorbing"){ cls+=" mask"; glyph=p.isSpace?" ":"▦"; }
+      else { cls+=" rand"; glyph=p.isSpace?" ":p.rand; }
+      cell.className=cls; cell.textContent=glyph;
+    }
+    S.revealedPrev=revealed;
+    el("tval").textContent=S.t.toFixed(2); el("step").textContent=revealCount; el("steps").textContent=n;
+    el("mode").textContent = S.playing?"reverse · denoising…":(S.t>=1?"pure noise":S.t<=0?"clean":"partly noised");
+    const sl=el("slider"); sl.value=S.t; sl.style.setProperty("--fill",(S.t*100)+"%");
+  }
+  function play(){
+    if(S.playing) return stop();
+    if(S.t<=0.001) S.t=1;
+    S.playing=true; el("play").innerHTML="❚❚ &nbsp;Pause"; let last=0;
+    const stepFn=ts=>{ if(!S.playing)return;
+      if(ts-last >= 420-S.speed*36){ last=ts; const n=S.per.length, r=Math.round((1-S.t)*n);
+        if(r>=n){ stop(); return; } S.t=Math.max(0,1-(r+1)/n); render(true); }
+      S.raf=requestAnimationFrame(stepFn); };
+    S.raf=requestAnimationFrame(stepFn);
+  }
+  function stop(){ S.playing=false; el("play").innerHTML="▶ &nbsp;Play denoising"; if(S.raf)cancelAnimationFrame(S.raf); render(); }
+  function reset(){ stop(); S.t=1; render(); }
+
+  el("slider").addEventListener("input",e=>{ stop(); S.t=+e.target.value; render(); });
+  el("speed").addEventListener("input",e=>S.speed=+e.target.value);
+  el("play").addEventListener("click",play);
+  el("reset").addEventListener("click",reset);
+  el("input").addEventListener("input",e=>{ S.text=e.target.value||" "; stop(); S.t=1; build(); syncCompare(); });
+  document.querySelectorAll("#kernel button").forEach(b=>b.addEventListener("click",()=>{
+    document.querySelectorAll("#kernel button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); S.kernel=b.dataset.k; render(); }));
+  document.querySelectorAll("#strategy button").forEach(b=>b.addEventListener("click",()=>{
+    document.querySelectorAll("#strategy button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); S.strategy=b.dataset.s; computeOrder(); render(); }));
+  build();
+  // deep-link state via hash (e.g. #k=uniform&t=0.35) — also used for the README preview
+  const hp=new URLSearchParams(location.hash.slice(1));
+  if(hp.has("k")){ const k=hp.get("k"); if(k==="uniform"||k==="absorbing"){ S.kernel=k;
+    document.querySelectorAll("#kernel button").forEach(x=>x.classList.toggle("on",x.dataset.k===k)); } }
+  if(hp.has("t")){ S.t=Math.max(0,Math.min(1,parseFloat(hp.get("t"))||0)); render(); }
+  else setTimeout(()=>{ if(!S.playing) play(); }, 900);
+
+  /* ---------------- kernel + matrix (section 02) ---------------- */
+  const K = { kernel:"absorbing", beta:0.30 };
+  const WORD = "diffusion";
+  function drawMatrix(){
+    const absorbing=K.kernel==="absorbing", N=absorbing?6:5, b=K.beta, m=N-1;
+    const grid=el("matrix"); grid.style.gridTemplateColumns=`repeat(${N+1},1fr)`;
+    grid.innerHTML="";
+    grid.appendChild(cell("","axis"));
+    for(let j=0;j<N;j++) grid.appendChild(cell(absorbing&&j===m?"#":String.fromCharCode(97+j),"axis"));
+    for(let i=0;i<N;i++){
+      grid.appendChild(cell(absorbing&&i===m?"#":String.fromCharCode(97+i),"axis"));
+      for(let j=0;j<N;j++){
+        let v;
+        if(absorbing){ if(i===m) v=(j===m?1:0); else v=(i===j?1-b:0)+(j===m?b:0); }
+        else { v=(i===j?1-b:0)+b/N; }
+        const c=cell(v>0.02?v.toFixed(2).slice(1):"","cell");
+        c.style.background=`rgba(233,180,76,${Math.max(0.05,v)})`;
+        c.style.color = v>0.5?"#171200":"rgba(255,255,255,.35)";
+        grid.appendChild(c);
+      }
+    }
+    // corrupted word preview (marginal at this beta, one step)
+    const rng=seeded(hash(WORD+K.kernel));
+    el("kernelWord").innerHTML=[...WORD].map(ch=>{
+      if(rng()<b){ return absorbing?`<span style="color:var(--mask)">▦</span>`
+                                   :`<span style="color:var(--noise)">${RAND[Math.floor(rng()*26)]}</span>`; }
+      return `<span style="color:var(--amber)">${ch}</span>`;
+    }).join("");
+    el("kernelDesc").textContent = absorbing
+      ? "Keep the letter, or turn it into [MASK] (probability β). Once masked, it stays masked — that's the absorbing state. The extra row/column is the mask."
+      : "Keep the letter, or replace it with a uniformly random letter (probability β). No mask state — corruption hides even where it happened.";
+    el("bval").textContent=b.toFixed(2);
+    el("beta").style.setProperty("--fill",((b-0.05)/0.9*100)+"%");
+  }
+  function cell(txt,cls){ const d=document.createElement("div"); d.className=cls; d.textContent=txt; return d; }
+  el("beta").addEventListener("input",e=>{ K.beta=+e.target.value; drawMatrix(); });
+  document.querySelectorAll("#kernel2 button").forEach(b=>b.addEventListener("click",()=>{
+    document.querySelectorAll("#kernel2 button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); K.kernel=b.dataset.k; drawMatrix(); }));
+  drawMatrix();
+
+  /* ---------------- compare confidence vs random (section 03) ---------------- */
+  function revealAt(text, strategy, frac){
+    const per=[...text], n=per.length, idx=[...Array(n).keys()];
+    if(strategy==="random"){ const rng=seeded(hash(text)^0x51ed);
+      for(let i=n-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [idx[i],idx[j]]=[idx[j],idx[i]]; } }
+    else { const score=i=>{ const c=per[i]; if(c===" ")return 100; const r=COMMON.indexOf(c); return r>=0?60-r:20; };
+      idx.sort((a,b)=>score(b)-score(a)||a-b); }
+    const rev=new Set(idx.slice(0,Math.round(frac*n)));
+    return per.map((c,i)=> rev.has(i) ? `<span style="color:var(--amber)">${c===" "?"&nbsp;":c}</span>`
+                                      : (c===" "?"&nbsp;":`<span style="color:var(--mask)">▦</span>`)).join("");
+  }
+  function syncCompare(){
+    const t=(S.text&&S.text.trim())?S.text:"the cat sat on the mat";
+    el("cmpConf").innerHTML=revealAt(t,"confidence",0.5);
+    el("cmpRand").innerHTML=revealAt(t,"random",0.5);
+  }
+  syncCompare();
+
+  /* ---------------- scroll reveals ---------------- */
+  const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); }}),{threshold:.12});
+  document.querySelectorAll(".reveal-on-scroll").forEach(s=>io.observe(s));
+})();
+</script>
+</body>
+</html>

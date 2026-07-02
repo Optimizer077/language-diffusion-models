@@ -20,3 +20,6 @@ Thumbs.db
 _derivations_dump.md
 _scratch/
 *.log
+
+# interactive build/preview scratch
+interactive/_preview*.png
